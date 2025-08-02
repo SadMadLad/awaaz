@@ -2,6 +2,7 @@
 
 require_relative "base_decoder"
 require_relative "via_shell"
+require_relative "../samples"
 
 module Awaaz
   module Decoders
@@ -43,12 +44,13 @@ module Awaaz
           # TODO
           # resampled_data header, samples
 
-          samples
+          Samples.new(samples, channels, sample_rate)
         end
 
         def to_mono(samples)
           return samples if samples.ndim == 1
-          (samples[0, true] + samples[1, true]) / 2.0
+
+          samples.mean(0)
         end
 
         def resampled_data(header, samples)

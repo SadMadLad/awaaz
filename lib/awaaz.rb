@@ -13,4 +13,6 @@ require "pry"
 module Awaaz
 end
 
-p Awaaz::Decoders::WavefileDecoder.new("/home/saad/Downloads/sample-wav.wav", decoder: :ffmpeg).load
+x = Awaaz::Decoders::WavefileDecoder.new("/home/saad/Downloads/sample-wav.wav", decoder: :ffmpeg).load
+y = Awaaz::Decoders::Mp3Decoder.new("/home/saad/Downloads/\"nokia tune\".mp3", decoder: :ffmpeg).load
+binding.pry

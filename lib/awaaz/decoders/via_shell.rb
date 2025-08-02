@@ -1,3 +1,4 @@
+require_relative "../samples"
 require_relative "../utils"
 
 module Awaaz
@@ -24,7 +25,7 @@ module Awaaz
             .add_option("-v", "quiet")
             .add_option("-i", filename)
             .add_option("-f", "s16le")
-            .add_option("-ac", channels)
+            .add_option("-ac", channels_flag)
             .add_option("-ar", sample_rate)
             .add_arg("-")
         end
@@ -36,7 +37,7 @@ module Awaaz
             .add_flag("-q")
             .add_option("-f", amplification_factor)
             .add_option("-r", sample_rate)
-            .add_flag(channels)
+            .add_flag(channels_flag)
             .add_flag("-s")
             .add_arg(filename)
         end
@@ -49,7 +50,7 @@ module Awaaz
             .add_option("-r", sample_rate)
             .add_option("-e", "signed")
             .add_option("-b", 16)
-            .add_option("-c", channels)
+            .add_option("-c", channels_flag)
           sox_command.add_option("-t", "raw") if opts[:raw]
           sox_command.add_arg("-")
 
@@ -60,7 +61,7 @@ module Awaaz
           shell_command = shell_command.command unless shell_command.is_a?(String)
           raw_audio = IO.popen(shell_command, "rb", &:read)
 
-          Numo::Int16.from_string(raw_audio).cast_to(Numo::DFloat) / amplification_factor.to_f
+          Samples.new(Numo::Int16.from_string(raw_audio).cast_to(Numo::DFloat) / amplification_factor.to_f, channels, sample_rate)
         end
 
         def set_decoder
@@ -80,17 +81,20 @@ module Awaaz
           (from_options(:sample_rate) || 22_050).to_s
         end
 
+        def channels_flag
+          channel_param = channels
+
+          return "-m" if channel_param.to_i == 1 && @decoder == :mpg123
+
+          channels
+        end
+
         def channels
-          arg_channel = from_options(:channels) || 1
-
-          # mpg123 passes mono radio as -m flag
-          return "-m" if arg_channel.to_i == 1 && @decoder == :mpg123
-
-          arg_channel
+          from_options(:channels) || 1
         end
 
         def mono?
-          channels == 1 || channels == "-m"
+          channels == 1
         end
 
         def stereo?
