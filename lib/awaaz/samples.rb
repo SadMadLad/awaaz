@@ -15,9 +15,9 @@ module Awaaz
     end
 
     def to_mono
-      return samples if samples.ndim == 1
+      return @samples if @samples.ndim == 1
 
-      samples.mean(0)
+      @samples.mean(0)
     end
   end
 end
