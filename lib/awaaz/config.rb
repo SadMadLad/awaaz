@@ -51,7 +51,7 @@ module Awaaz
     end
 
     def potential_decoders
-      config.potential_decorders
+      config.potential_decoders
     end
   end
 end

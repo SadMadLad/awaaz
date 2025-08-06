@@ -1,9 +1,11 @@
 module Awaaz
   class Samples
-    def initialize(samples, channels, sample_rate)
-      @samples = samples
-      @channels = channels
+    attr_reader :samples
+
+    def initialize(sample_rate, channels, samples)
       @sample_rate = sample_rate
+      @channels = channels
+      @samples = processed_samples samples
     end
 
     def shape
@@ -19,5 +21,10 @@ module Awaaz
 
       @samples.mean(0)
     end
+
+    private
+      def processed_samples(input_samples)
+        input_samples.reshape(input_samples.size / @channels, @channels).transpose
+      end
   end
 end

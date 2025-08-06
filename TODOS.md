@@ -1,0 +1,2 @@
+- Lazy decoding of an audio
+- `libsndfile` support

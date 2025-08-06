@@ -44,7 +44,7 @@ module Awaaz
           # TODO
           # resampled_data header, samples
 
-          Samples.new(samples, channels, sample_rate)
+          Samples.new(sample_rate, channels, samples)
         end
 
         def to_mono(samples)

@@ -8,7 +8,7 @@ module Awaaz
       end
 
       def add_arg(arg)
-        @args << arg.strip.to_s
+        @args << arg.to_s.strip
 
         self
       end

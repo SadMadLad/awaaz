@@ -5,7 +5,7 @@ module Awaaz
     class BaseDecoder
       class << self
         def default_available_options
-          %i[amplification_factor decoder sample_rate channels]
+          %i[amplification_factor decoder sample_rate mono]
         end
 
         def set_available_options(provided_available_options = default_available_options)
