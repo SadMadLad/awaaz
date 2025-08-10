@@ -1,10 +1,12 @@
 module Awaaz
   module Utils
     class Samples
-      def initialize(sample_rate, channels, samples)
+      def initialize(sample_rate, channels, samples, mono: false)
         @sample_rate = sample_rate
         @channels = channels
+        @mono = mono
         @samples = processed_samples samples
+        to_mono if mono?
       end
 
       def shape
@@ -18,7 +20,8 @@ module Awaaz
       def to_mono
         return @samples if @samples.ndim == 1
 
-        @samples.mean(0)
+        @samples = @samples.mean(0)
+        @channels = 1
       end
 
       # For debugging
@@ -31,6 +34,10 @@ module Awaaz
       private
         def processed_samples(input_samples)
           input_samples.reshape(input_samples.size / @channels, @channels).transpose
+        end
+
+        def mono?
+          @mono == true || @channels == 1
         end
     end
   end

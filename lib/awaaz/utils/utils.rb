@@ -2,6 +2,7 @@
 
 require_relative "resample"
 require_relative "samples"
+require_relative "sound_config"
 require_relative "soundread"
 require_relative "shell_command_builder"
 require_relative "via_shell"

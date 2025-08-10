@@ -2,6 +2,8 @@ module Awaaz
   module Utils
     module ViaShell
       private
+        # Options from the decoder classes sample_rate, amplification_factor
+
         def shell_load(...)
           shell_command = build_shell_command(...)
           load_samples shell_command
@@ -67,10 +69,9 @@ module Awaaz
 
         def set_decoder
           return @decoder if @decoder
-          decoder_from_options = from_options(:decoder)&.to_sym
 
-          @decoder = if decoder_from_options && config.potential_decoders.include?(decoder_from_options)
-            decoder_from_options
+          @decoder = if decoder_option && potential_decoders.include?(decoder_option)
+            decoder_option
           elsif config.ffmpeg?
             :ffmpeg
           elsif config.mpg123?
@@ -84,39 +85,14 @@ module Awaaz
                 "No available decoder detected to decode mp3 files. Potential decoders: #{potential_decoders}" if @decoder.nil?
         end
 
-        def sample_rate
-          (from_options(:sample_rate) || 22_050).to_s
-        end
-
         def channels_flag
           return "-m" if mpg123? && mono?
+          
           num_channels
-        end
-
-        def num_channels
-          return 1 if mono?
-
-          2
-        end
-
-        def mono
-          from_options(:mono) || false
-        end
-
-        def mono?
-          mono
-        end
-
-        def stereo?
-          !mono?
         end
 
         def mpg123?
           set_decoder == :mpg123
-        end
-
-        def amplification_factor
-          (from_options(:amplification_factor) || 32_768).to_i
         end
     end
   end

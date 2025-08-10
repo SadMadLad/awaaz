@@ -8,7 +8,6 @@ module Awaaz
       set_available_options
 
       def load
-        validate_options
         validate_file_extension ".mp3"
         shell_load sox_options: { raw: true }
       end

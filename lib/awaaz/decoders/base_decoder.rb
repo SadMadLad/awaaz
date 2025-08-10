@@ -23,7 +23,7 @@ module Awaaz
 
       def initialize(filename, **options)
         @filename = filename
-        @options = options
+        @options = Utils::SoundConfig.new(available_options, **options)
       end
 
       def load
@@ -39,26 +39,14 @@ module Awaaz
           raise ArgumentError, "Not a #{file_extension} file" unless File.extname(@filename) == file_extension
         end
 
-        def validate_options
-          return if @options.empty?
+        def config = Awaaz.config
 
-          @options.each_key do |key|
-            next if available_options.include?(key.to_sym)
-
-            raise ArgumentError, "Invalid options key passed: #{key}. Available options: #{available_options.join}"
-          end
+        %i[no_decoders? potential_decoders].each do |config_method|
+          define_method(config_method) { config.public_send(config_method) }
         end
 
-        def config
-          Awaaz.config
-        end
-
-        def no_decoders?
-          config.no_decoders?
-        end
-
-        def from_options(key)
-          @options[key.to_sym] || @options[key.to_s]
+        %i[sample_rate num_channels decoder_option mono mono? stereo? amplification_factor].each do |option_key|
+          define_method(option_key) { @options.public_send(option_key) }
         end
     end
   end
