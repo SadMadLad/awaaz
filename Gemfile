@@ -5,13 +5,10 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in awaaz.gemspec
 gemspec
 
-gem "rake", "~> 13.0"
-
 group :development do
-  gem "ruby-lsp"
+  gem "rubocop", "~> 1.21"
+  gem "ruby-lsp", "~> 0.26.1"
+  gem "yard", "~> 0.9.37"
 end
 
-gem "rubocop", "~> 1.21"
-
-gem "numo-narray", "~> 0.9.1"
-gem "pry"
+gem "rake", "~> 13.0"

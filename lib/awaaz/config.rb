@@ -31,14 +31,15 @@ module Awaaz
     end
 
     private
-      def detect_decoders
-        decoders = []
-        decoders << :mpg123 if system("which mpg123 > /dev/null 2>&1")
-        decoders << :ffmpeg if system("which ffmpeg > /dev/null 2>&1")
-        decoders << :sox    if system("which sox > /dev/null 2>&1")
 
-        decoders
-      end
+    def detect_decoders
+      decoders = []
+      decoders << :mpg123 if system("which mpg123 > /dev/null 2>&1")
+      decoders << :ffmpeg if system("which ffmpeg > /dev/null 2>&1")
+      decoders << :sox    if system("which sox > /dev/null 2>&1")
+
+      decoders
+    end
   end
 
   class << self

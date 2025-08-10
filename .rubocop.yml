@@ -1,5 +1,6 @@
 AllCops:
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.4
+  NewCops: enable
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes
@@ -7,6 +8,8 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
 
-Methods/MetricLength:
+Metrics/MethodLength:
   Max: 20
+
+
 

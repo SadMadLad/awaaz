@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Awaaz
   module Utils
     class Samples
@@ -32,13 +34,14 @@ module Awaaz
       end
 
       private
-        def processed_samples(input_samples)
-          input_samples.reshape(input_samples.size / @channels, @channels).transpose
-        end
 
-        def mono?
-          @mono == true || @channels == 1
-        end
+      def processed_samples(input_samples)
+        input_samples.reshape(input_samples.size / @channels, @channels).transpose
+      end
+
+      def mono?
+        @mono == true || @channels == 1
+      end
     end
   end
 end

@@ -21,9 +21,9 @@ module Awaaz
 
       set_available_options
 
-      def initialize(filename, **options)
+      def initialize(filename, **)
         @filename = filename
-        @options = Utils::SoundConfig.new(available_options, **options)
+        @options = Utils::SoundConfig.new(available_options, **)
       end
 
       def load
@@ -35,19 +35,20 @@ module Awaaz
       end
 
       protected
-        def validate_file_extension(file_extension)
-          raise ArgumentError, "Not a #{file_extension} file" unless File.extname(@filename) == file_extension
-        end
 
-        def config = Awaaz.config
+      def validate_file_extension(file_extension)
+        raise ArgumentError, "Not a #{file_extension} file" unless File.extname(@filename) == file_extension
+      end
 
-        %i[no_decoders? potential_decoders].each do |config_method|
-          define_method(config_method) { config.public_send(config_method) }
-        end
+      def config = Awaaz.config
 
-        %i[sample_rate num_channels decoder_option mono mono? stereo? amplification_factor].each do |option_key|
-          define_method(option_key) { @options.public_send(option_key) }
-        end
+      %i[no_decoders? potential_decoders].each do |config_method|
+        define_method(config_method) { config.public_send(config_method) }
+      end
+
+      %i[sample_rate num_channels decoder_option mono mono? stereo? amplification_factor].each do |option_key|
+        define_method(option_key) { @options.public_send(option_key) }
+      end
     end
   end
 end

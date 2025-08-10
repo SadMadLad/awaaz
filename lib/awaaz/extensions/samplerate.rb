@@ -1,19 +1,22 @@
+# frozen_string_literal: true
+
 require "ffi"
 
 module Extensions
   module Samplerate
     extend FFI::Library
-    ffi_lib 'samplerate'
+
+    ffi_lib "samplerate"
 
     class SRC_DATA < FFI::Struct
-      layout :data_in,     :pointer,
-            :data_out,    :pointer,
-            :input_frames,  :long,
-            :output_frames, :long,
-            :input_frames_used, :long,
-            :output_frames_gen, :long,
-            :end_of_input, :int,
-            :src_ratio,    :double
+      layout :data_in, :pointer,
+             :data_out, :pointer,
+             :input_frames,  :long,
+             :output_frames, :long,
+             :input_frames_used, :long,
+             :output_frames_gen, :long,
+             :end_of_input, :int,
+             :src_ratio,    :double
     end
 
     attach_function :src_simple, [SRC_DATA.by_ref, :int, :int], :int

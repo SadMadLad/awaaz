@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Awaaz
   module Utils
     class SoundConfig
@@ -9,7 +11,6 @@ module Awaaz
       end
 
       # Possible options when processing audio
-
       def sample_rate
         from_options(:sample_rate) || 22_050
       end
@@ -31,9 +32,7 @@ module Awaaz
       end
 
       def num_channels
-        return 1 if mono?
-
-        2
+        mono? ? 1 : 2
       end
 
       def amplification_factor
@@ -45,17 +44,18 @@ module Awaaz
       end
 
       private
-        def from_options(key)
-          @options[key.to_s] || @options[key.to_sym]
-        end
 
-        def prepare
-          @options.keys.each do |key|
-            next if @valid_options.include?(key.to_sym) || @valid_options.include?(key.to_s)
+      def from_options(key)
+        @options[key.to_s] || @options[key.to_sym]
+      end
 
-            raise ArgumentError, "Invalid key passed: #{key}. Possible keys: #{@valid_options.join(',')}"
-          end
+      def prepare
+        @options.each_key do |key|
+          next if @valid_options.include?(key.to_sym) || @valid_options.include?(key.to_s)
+
+          raise ArgumentError, "Invalid key passed: #{key}. Possible keys: #{@valid_options.join(",")}"
         end
+      end
     end
   end
 end
