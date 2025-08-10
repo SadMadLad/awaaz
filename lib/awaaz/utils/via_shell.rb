@@ -1,8 +1,5 @@
-require_relative "../samples"
-require_relative "../utils"
-
 module Awaaz
-  module Decoders
+  module Utils
     module ViaShell
       private
         def shell_load(...)
@@ -65,7 +62,7 @@ module Awaaz
           raw_audio = IO.popen(shell_command, "rb", &:read)
           samples = Numo::Int16.from_string(raw_audio).cast_to(Numo::DFloat) / amplification_factor.to_f
 
-          Samples.new(sample_rate.to_i, num_channels, samples)
+          Utils::Samples.new(sample_rate.to_i, num_channels, samples)
         end
 
         def set_decoder
@@ -93,9 +90,7 @@ module Awaaz
 
         def channels_flag
           return "-m" if mpg123? && mono?
-          return 1 if mono?
-
-          2
+          num_channels
         end
 
         def num_channels
@@ -126,3 +121,4 @@ module Awaaz
     end
   end
 end
+

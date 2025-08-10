@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "base_decoder"
-require_relative "via_shell"
-
 module Awaaz
   module Decoders
     class Mp3Decoder < BaseDecoder
-      include ViaShell
+      include Utils::ViaShell
 
       set_available_options
 

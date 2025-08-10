@@ -2,4 +2,6 @@
 
 module Awaaz
   class DecoderNotFound < ArgumentError; end
+  class ResamplingError < StandardError; end
+  class AudioreadError < StandardError; end
 end
