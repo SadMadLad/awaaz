@@ -1,2 +1,3 @@
 - Lazy decoding of an audio
 - `libsndfile` support
+- Streaming output of larger files
