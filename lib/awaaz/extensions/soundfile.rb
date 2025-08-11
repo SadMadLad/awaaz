@@ -55,26 +55,18 @@ module Awaaz
       ##
       # Opens an audio file and returns a pointer to the file handle.
       #
-      # @param path [String] Path to the audio file.
-      # @param mode [Integer] Mode flags (e.g., {SFM_READ} for reading).
-      # @param sf_info [FFI::Pointer] Pointer to an {SF_INFO} struct to store metadata.
-      # @return [FFI::Pointer] Pointer to the opened file handle.
       # @see http://www.mega-nerd.com/libsndfile/api.html#open
       attach_function :sf_open, %i[string int pointer], :pointer
 
       ##
       # Reads floating-point audio frames from an open file.
       #
-      # @param sndfile [FFI::Pointer] Pointer to the open sound file.
-      # @param buffer [FFI::Pointer] Buffer to store the read samples.
-      # @param frames [Integer] Number of frames to read.
       # @return [Integer] Number of frames actually read.
       attach_function :sf_readf_float, %i[pointer pointer long_long], :long_long
 
       ##
       # Closes an open audio file.
       #
-      # @param sndfile [FFI::Pointer] Pointer to the open sound file.
       # @return [Integer] Zero on success, non-zero on error.
       attach_function :sf_close, [:pointer], :int
     end

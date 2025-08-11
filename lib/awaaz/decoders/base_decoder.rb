@@ -30,17 +30,17 @@ module Awaaz
         # Loads audio from a given file using this decoder.
         #
         # @param filename [String] The path to the audio file to load.
-        # @param ... [Object] Any additional arguments required by the decoder.
         # @return [Object] The decoded audio data.
+        #
+        # @see #initialize
         def load(filename, ...)
-          new(filename).load
+          new(filename, ...).load
         end
       end
 
       set_available_options
 
       # @param filename [String] Path to the audio file to decode.
-      # @param **options [Hash] Additional configuration options for decoding.
       def initialize(filename, **)
         @filename = filename
         @options = Utils::SoundConfig.new(available_options, **)

@@ -56,18 +56,11 @@ module Awaaz
       ##
       # Performs a simple sample rate conversion.
       #
-      # @param src_data [SRC_DATA] A reference to an {SRC_DATA} struct containing
-      #   the input data, buffers, and conversion parameters.
-      # @param converter_type [Integer] The converter type (e.g., {SRC_SINC_BEST_QUALITY}).
-      # @param channels [Integer] Number of audio channels.
-      # @return [Integer] Zero on success, non-zero error code on failure.
-      # @see #resample_option
       attach_function :src_simple, [SRC_DATA.by_ref, :int, :int], :int
 
       ##
       # Converts an error code to a human-readable error message.
       #
-      # @param error_code [Integer] The error code returned by {#src_simple}.
       # @return [String] Human-readable error message.
       attach_function :src_strerror, [:int], :string
 

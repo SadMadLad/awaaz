@@ -8,7 +8,7 @@ module Awaaz
     # This module is intended to be mixed into decoder classes that rely on external
     # tools such as `ffmpeg`, `mpg123`, or `sox` to decode audio files. It builds the
     # appropriate shell commands, executes them, and converts the raw audio data into
-    # {Numo::NArray} samples.
+    # [Numo::NArray] samples.
     #
     # @note This module is `private` and its methods are meant to be used internally by decoders.
     #
@@ -27,7 +27,6 @@ module Awaaz
       ##
       # Loads audio samples by building and executing a shell command.
       #
-      # @param args [Hash] Options to pass through to {#build_shell_command}.
       # @return [Array<(Numo::DFloat, Integer, Integer)>] An array containing:
       #   - samples (`Numo::DFloat`)
       #   - number of channels (`Integer`)

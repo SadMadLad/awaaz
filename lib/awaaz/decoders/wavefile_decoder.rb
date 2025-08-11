@@ -34,7 +34,7 @@ module Awaaz
       #
       # @return [Array<(Numo::NArray, Integer, Integer)>]
       #   Returns an array containing:
-      #   - samples: A {Numo::NArray} of decoded audio samples
+      #   - samples: A [Numo::NArray] of decoded audio samples
       #   - sample_rate: Integer sample rate (Hz)
       #   - channels: Integer number of audio channels
       #
