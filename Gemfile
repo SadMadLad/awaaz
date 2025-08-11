@@ -6,6 +6,8 @@ source "https://rubygems.org"
 gemspec
 
 group :development do
+  gem "irb", "~> 1.15.2"
+  gem "pry", "~> 0.15.2"
   gem "rubocop", "~> 1.21"
   gem "ruby-lsp", "~> 0.26.1"
   gem "yard", "~> 0.9.37"
