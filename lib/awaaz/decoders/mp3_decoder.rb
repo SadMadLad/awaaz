@@ -37,7 +37,6 @@ module Awaaz
       #   The processed audio data (return type depends on BaseDecoder#process).
       #
       def load
-        validate_file_extension ".mp3"
         process(*shell_load(sox_options: { raw: true }))
       end
     end

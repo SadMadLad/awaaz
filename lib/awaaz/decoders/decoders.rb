@@ -16,6 +16,7 @@
 require_relative "base_decoder"
 require_relative "mp3_decoder"
 require_relative "wavefile_decoder"
+require_relative "decode"
 
 module Awaaz
   # Namespace for all audio decoder implementations.

@@ -44,8 +44,6 @@ module Awaaz
       #   - Otherwise, it will use shell based decoding.
       #
       def load
-        validate_file_extension ".wav"
-
         output_data = if no_decoders? || soundread?
                         soundread
                       else
