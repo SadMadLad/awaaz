@@ -23,6 +23,9 @@ You can install **any one** of the following:
   - `sox`  
   - `mpg123`
 
+#### Additional Requirement
+- The Ruby gem [`numo-narray`](https://github.com/ruby-numo/numo-narray) is required for numerical array operations.
+
 ### Installation Examples
 
 - **Just ffmpeg** → works for all formats (no `libsndfile` or `libsamplerate` needed).  
