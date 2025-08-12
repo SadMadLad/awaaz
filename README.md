@@ -2,9 +2,35 @@
 
 Awaaz is a Ruby gem for working with audio, from decoding to analysis, making it easier to process and understand sound in your projects.
 
-## Installation
+## Requirements
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+Awaaz can decode audio in two ways:
+
+#### 1. Shell-based decoding  
+You can install **any one** of the following:
+
+- [`ffmpeg`](https://github.com/FFmpeg/FFmpeg) – supports most formats, including MP3.  
+- [`sox`](https://github.com/chirlu/sox) – also supports most formats, including MP3.  
+- [`mpg123`](https://github.com/madebr/mpg123) – **MP3 only**.
+
+#### 2. Library-based decoding and resampling  
+- [`libsndfile`](https://github.com/libsndfile/libsndfile) – reads audio files (but **cannot** read MP3 files).  
+- [`libsamplerate`](https://github.com/libsndfile/libsamplerate) – resamples audio samples when using `libsndfile`.  
+
+⚠ **Important**:  
+- If you need MP3 support with the library-based method, you **must also** install one of:  
+  - `ffmpeg`  
+  - `sox`  
+  - `mpg123`
+
+### Installation Examples
+
+- **Just ffmpeg** → works for all formats (no `libsndfile` or `libsamplerate` needed).  
+- **Just sox** → works for all formats (no `libsndfile` or `libsamplerate` needed).  
+- **libsndfile + libsamplerate** → works for non-MP3 formats. For MP3, add `ffmpeg`, `sox`, or `mpg123`.  
+- **Everything installed** → maximum flexibility.
+
+## Installation
 
 Install the gem and add to the application's Gemfile by executing:
 
@@ -20,7 +46,18 @@ gem install awaaz
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+# To decode the audio file
+
+samples, sample_rate = Awaaz.load("path/to/audio_file")
+
+# To decode the audio file using specified decoder
+
+samples, sample_rate = Awaaz.load("path/to/audio_file", decoder: :sox)
+```
+```
+```
+
 
 ## Development
 

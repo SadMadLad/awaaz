@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = ["zeroinside4u@gmail.com"]
 
   spec.summary = "Audio Analysis with Ruby"
-  spec.description = "TODO: Write a longer description or delete this line."
+  spec.description = "A gem for loading, decoding, processing and analyse audio."
   spec.homepage = "https://github.com/SadMadLad/awaaz"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.4.2"
