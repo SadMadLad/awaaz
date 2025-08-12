@@ -48,11 +48,9 @@ gem install awaaz
 
 ```ruby
 # To decode the audio file
-
 samples, sample_rate = Awaaz.load("path/to/audio_file")
 
 # To decode the audio file using specified decoder
-
 samples, sample_rate = Awaaz.load("path/to/audio_file", decoder: :sox)
 ```
 
@@ -64,7 +62,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[SadMadLad]/awaaz. This project is intended to be a safe, welcoming space for collaboration, and contributors.
+Bug reports and pull requests are welcome on GitHub at [Awaaz](https://github.com/SadMadLad/awaaz). This project is intended to be a safe, welcoming space for collaboration, and contributors.
 
 ## License
 
