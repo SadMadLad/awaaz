@@ -55,9 +55,6 @@ samples, sample_rate = Awaaz.load("path/to/audio_file")
 
 samples, sample_rate = Awaaz.load("path/to/audio_file", decoder: :sox)
 ```
-```
-```
-
 
 ## Development
 
