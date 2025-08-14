@@ -122,7 +122,10 @@ module Awaaz
       def parse_soundfile(soundfile, frames, channels)
         buffer = FFI::MemoryPointer.new(:float, frames * channels)
         read_frames = Extensions::Soundfile.sf_readf_float(soundfile, buffer, frames)
-        Numo::SFloat.cast(buffer.read_array_of_float(read_frames * channels))
+
+        Numo::SFloat.from_string(
+          buffer.read_string(read_frames * channels * FFI.type_size(:float))
+        )
       end
 
       ##
@@ -156,10 +159,10 @@ module Awaaz
         end
 
         output_rate, sampling_option = @resample_options.values_at(:output_rate, :sampling_rate)
-        sampling_option ||= :sinc_fastest
+        sampling_option ||= :linear
 
         [
-          Utils::Resample.read_and_resample_numo(samples, sample_rate, output_rate, sampling_option:),
+          Utils::Resample.read_and_resample(samples, sample_rate, output_rate, sampling_option:),
           channels,
           output_rate
         ]

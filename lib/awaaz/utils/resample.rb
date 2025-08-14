@@ -6,7 +6,7 @@ module Awaaz
     # Resample utilities for audio data represented as Numo::NArray.
     # Wraps the `libsamplerate` bindings provided by {Extensions::Samplerate}.
     #
-    # @note This module is intended for internal use, but `read_and_resample_numo`
+    # @note This module is intended for internal use, but `read_and_resample`
     #   is public for advanced users who need manual resampling.
     module Resample
       class << self
@@ -31,8 +31,8 @@ module Awaaz
         #
         # @example Resample 44.1kHz mono audio to 48kHz
         #   samples = Numo::SFloat.new(44100).rand
-        #   new_samples = Awaaz::Utils::Resample.read_and_resample_numo(samples, 44100, 48000)
-        def read_and_resample_numo(input_samples, input_rate, output_rate, sampling_option: :sinc_best_quality)
+        #   new_samples = Awaaz::Utils::Resample.read_and_resample(samples, 44100, 48000)
+        def read_and_resample(input_samples, input_rate, output_rate, sampling_option: :linear)
           validate_inputs(input_samples, input_rate, output_rate)
 
           ratio = calculate_ratio(input_rate, output_rate)

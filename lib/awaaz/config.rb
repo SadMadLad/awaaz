@@ -76,6 +76,28 @@ module Awaaz
       @available_decoders.nil? || @available_decoders.empty?
     end
 
+    ##
+    # Checks if there is at least one decoder capable of handling WAV files.
+    #
+    # Currently, `ffmpeg` and `sox` are considered capable of decoding WAV files.
+    #
+    # @return [Boolean] `true` if either `ffmpeg` or `sox` is available, otherwise `false`.
+    #
+    def decoders_for_wav?
+      ffmpeg? || sox?
+    end
+
+    ##
+    # Checks if there are no decoders available for handling WAV files.
+    #
+    # This is the logical negation of {#decoders_for_wav?}.
+    #
+    # @return [Boolean] `true` if neither `ffmpeg` nor `sox` is available, otherwise `false`.
+    #
+    def no_decoders_for_wav?
+      !decoders_for_wav?
+    end
+
     private
 
     ##

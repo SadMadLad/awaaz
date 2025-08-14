@@ -25,7 +25,7 @@ module Awaaz
     # @param filename [String] the path to the audio file
     # @raise [ArgumentError] if the MIME type is not supported
     # @return [Object] the result of decoding, as returned by the decoder class
-    def load(filename)
+    def load(filename, ...)
       fm = FileMagic.new(FileMagic::MAGIC_MIME_TYPE)
       mime_type = fm.file(filename)
 
@@ -35,7 +35,7 @@ module Awaaz
       end
 
       decoding_class = DECODER_MAP[mime_type]
-      decoding_class.load(filename)
+      decoding_class.load(filename, ...)
     end
   end
 end
