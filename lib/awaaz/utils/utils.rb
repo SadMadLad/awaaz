@@ -30,7 +30,16 @@ module Awaaz
   module Utils
   end
 
-  def resample(...)
-    Resample.read_and_resample(...)
+  class << self
+    def resample(...)
+      Resample.read_and_resample(...)
+    end
+
+    def utils = Utils
+
+    def rms(...) = utils.rms(...)
+    def rms_overall(...) = utils.rms_overall(...)
+    def zcr(...) = utils.zcr(...)
+    def zcr_overall(...) = utils.zcr_overall(...)
   end
 end

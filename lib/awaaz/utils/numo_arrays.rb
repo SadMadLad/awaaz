@@ -34,6 +34,23 @@ module Awaaz
       end
 
       ##
+      # Pads an array with zeros (or a specified value) along a given axis.
+      #
+      # @param array [Numo::NArray] The input array (e.g., shape [channels, samples]).
+      # @param pad_count [Integer] Number of padding elements to add.
+      # @param axis [Integer] Axis along which to pad (default: 1 for time axis).
+      # @param with [Numeric] Value to pad with (default: 0).
+      #
+      # @return [Numo::NArray] The padded array.
+      #
+      def pad_right(array, pad_count, axis: 1, with: 0)
+        channels_count = array.shape.first
+        padded_array = Numo::SFloat.new(channels_count, pad_count).fill(with)
+
+        array.concatenate(padded_array, axis:)
+      end
+
+      ##
       # Builds a list of sample index ranges for each analysis frame.
       #
       # @param signal_length [Integer] Number of samples in the (possibly padded) signal.
@@ -84,7 +101,7 @@ module Awaaz
       # @return [Numo::SFloat] A 2D array of RMS values with shape [channels, frames].
       #
       def rms(samples, frame_size: 2048, hop_length: 512)
-        samples, frame_groups = frame_ranges(samples, frame_size: frame_size, hop_length: hop_length)
+        samples, frame_groups = frame_ranges(samples, frame_size:, hop_length:)
 
         means = Numo::SFloat.zeros(samples.shape[0], frame_groups.length)
         frame_groups.each_with_index do |frame_range, idx|
@@ -105,22 +122,81 @@ module Awaaz
         Math.sqrt((samples**2).mean)
       end
 
-      ##
-      # Pads an array with zeros (or a specified value) along a given axis.
+      # Calculates the zero-crossing rate (ZCR) of an audio signal frame-by-frame.
       #
-      # @param array [Numo::NArray] The input array (e.g., shape [channels, samples]).
-      # @param pad_count [Integer] Number of padding elements to add.
-      # @param axis [Integer] Axis along which to pad (default: 1 for time axis).
-      # @param with [Numeric] Value to pad with (default: 0).
+      # The zero-crossing rate is the proportion of consecutive samples in a frame
+      # where the signal changes sign (positive to negative or vice versa).
+      # It is often used as a simple feature in speech/music analysis.
       #
-      # @return [Numo::NArray] The padded array.
+      # @param samples [Numo::NArray] 2D array of audio samples.
+      #   Shape: [n_channels, n_samples].
+      # @param frame_size [Integer] Size of each analysis frame in samples. Default: 2048.
+      # @param hop_length [Integer] Step size between successive frames in samples. Default: 512.
+      # @return [Numo::SFloat] 2D array of zero-crossing rates per frame for each channel.
+      #   Shape: [n_channels, n_frames].
       #
-      def pad_right(array, pad_count, axis: 1, with: 0)
-        channels_count = array.shape.first
-        padded_array = Numo::SFloat.new(channels_count, pad_count).fill(with)
+      # @example
+      #   # Stereo signal: 2 channels, 44100 samples
+      #   zcr_values = zcr(samples, frame_size: 2048, hop_length: 512)
+      #   puts zcr_values.shape  # => [2, n_frames]
+      #
+      # rubocop:disable Style/NumericPredicate
+      def zcr(samples, frame_size: 2048, hop_length: 512)
+        framed_samples, frame_groups = frame_ranges(samples, frame_size:, hop_length:)
 
-        array.concatenate(padded_array, axis:)
+        n_channels = framed_samples.shape[0]
+        zcrs = Numo::SFloat.zeros(n_channels, frame_groups.length)
+
+        frame_groups.each_with_index do |frame_range, idx|
+          zcrs[true, idx] = zcr_for_frame(framed_samples[true, frame_range], frame_size)
+        end
+
+        zcrs
       end
+
+      # Calculates the zero-crossing rate for a single frame of audio.
+      #
+      # @param frame [Numo::NArray] 2D array containing audio samples for a single frame.
+      #   Shape: [n_channels, frame_size].
+      # @param frame_size [Integer] Number of samples in the frame.
+      # @return [Numo::SFloat] 1D array of zero-crossing rates for each channel in the frame.
+      #   Shape: [n_channels].
+      #
+      # @example
+      #   frame = samples[true, 0...2048]
+      #   single_frame_zcr = zcr_for_frame(frame, 2048)
+      #   puts single_frame_zcr  # => Numo::SFloat[0.15, 0.12]
+      def zcr_for_frame(frame, frame_size)
+        first_part = frame[true, 0...-1]
+        second_part = frame[true, 1..-1]
+        products = first_part * second_part
+
+        sign_changes = products < 0
+        counts = sign_changes.count_true(axis: 1)
+
+        counts / frame_size.to_f
+      end
+      # rubocop:enable Style/NumericPredicate
+
+      # Calculates the overall zero-crossing rate (ZCR) of an entire audio signal.
+      #
+      # @param samples [Numo::NArray] 2D array of audio samples.
+      #   Shape: [n_channels, n_samples].
+      # @return [Numo::SFloat] 1D array containing the overall ZCR for each channel.
+      #   Shape: [n_channels].
+      #
+      # @example
+      #   # Stereo signal: 2 channels, 44100 samples
+      #   overall_zcr = zcr_overall(samples)
+      #   puts overall_zcr.shape  # => [2]
+      #
+      # rubocop:disable Style/NumericPredicate
+      #
+      def zcr_overall(samples)
+        ((samples[true, 0...-1] * samples[true, 1..-1]) < 0).count_true(axis: 1) / samples.shape[1].to_f
+      end
+      #
+      # rubocop:enable Style/NumericPredicate
     end
   end
 end

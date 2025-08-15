@@ -83,7 +83,7 @@ module Awaaz
       # @return [Array<(Numo::DFloat, Integer)>] Processed samples and the sample rate.
       def process(input_samples, channels, sample_rate)
         input_samples = input_samples.reshape(channels, input_samples.size / channels)
-        input_samples = input_samples.mean(0) if mono?
+        input_samples = input_samples.mean(0).reshape(1, input_samples.shape[1]) if mono?
 
         [input_samples, sample_rate]
       end
