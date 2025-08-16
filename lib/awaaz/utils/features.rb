@@ -198,28 +198,57 @@ module Awaaz
       # rubocop:enable Style/NumericPredicate
       #
 
+      # Generates a Hann window of given frame size.
+      #
+      # A Hann window is commonly used in spectral analysis
+      # to reduce spectral leakage before applying an FFT.
+      #
+      # @param frame_size [Integer] the size of the frame (number of samples per window)
+      # @return [Numo::DFloat] the Hann window of length `frame_size`
       def hann_window(frame_size)
         idx = Numo::DFloat.new(frame_size).seq
         0.5 * (1 - Numo::NMath.cos(2 * Math::PI * idx / (frame_size - 1)))
       end
 
+      # Computes the Short-Time Fourier Transform (STFT) of a multi-channel signal.
+      #
+      # This method applies a sliding Hann window to the input signal, computes
+      # the FFT for each frame and each channel, and stores the positive frequency
+      # bins into a 3D complex-valued matrix.
+      #
+      # The resulting STFT matrix has dimensions:
+      #   `[channels, frequencies, frames]`
+      #
+      # @param samples [Numo::NArray] a 2D array of shape [channels, samples]
+      #   containing the audio data.
+      # @param frame_size [Integer] the size of each FFT frame (default: 2048)
+      # @param hop_length [Integer] the number of samples between successive frames (default: 512)
+      # @return [Numo::DComplex] a 3D array of shape
+      #   `[channels, (frame_size / 2 + 1), frames]` containing the complex STFT values
+      #
+      # @example Compute STFT for mono audio
+      #   samples = Numo::DFloat[[0.0, 1.0, 0.0, -1.0, ...]] # shape: [1, num_samples]
+      #   stft_matrix = stft(samples, frame_size: 1024, hop_length: 256)
+      #
+      # rubocop:disable Metrics/AbcSize
       def stft(samples, frame_size: 2048, hop_length: 512)
         samples, ranges = frame_ranges(samples, frame_size:, hop_length:)
         window = hann_window(frame_size)
-        n_channels = samples.shape[0]
-        n_frames = ranges.size
-        n_freqs = (frame_size / 2) + 1
+        channels_count = samples.shape[0]
+        freqs_size = (frame_size / 2) + 1
 
-        stft_matrix = Numo::DComplex.zeros(n_channels, n_freqs, n_frames)
+        stft_matrix = Numo::DComplex.zeros(channels_count, freqs_size, ranges.size)
 
         ranges.each_with_index do |range, frame_idx|
-          n_channels.times do |ch|
-            stft_matrix[ch, true, frame_idx] = Numo::Pocketfft.fft samples[ch, range] * window
+          channels_count.times do |ch|
+            fft_result = Numo::Pocketfft.fft(samples[ch, range] * window)
+            stft_matrix[ch, true, frame_idx] = fft_result[0...freqs_size]
           end
         end
 
         stft_matrix
       end
+      # rubocop:enable Metrics/AbcSize
     end
   end
 end
