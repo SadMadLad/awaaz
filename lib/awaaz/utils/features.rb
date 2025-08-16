@@ -105,8 +105,7 @@ module Awaaz
 
         means = Numo::SFloat.zeros(samples.shape[0], frame_groups.length)
         frame_groups.each_with_index do |frame_range, idx|
-          frame = samples[true, frame_range]
-          means[true, idx] = Numo::NMath.sqrt((frame**2).mean(1))
+          means[true, idx] = samples[true, frame_range].rms(axis: 1)
         end
         means
       end
@@ -119,7 +118,7 @@ module Awaaz
       # @return [Float] RMS value for the entire signal.
       #
       def rms_overall(samples)
-        Math.sqrt((samples**2).mean)
+        samples.rms
       end
 
       # Calculates the zero-crossing rate (ZCR) of an audio signal frame-by-frame.
@@ -197,6 +196,30 @@ module Awaaz
       end
       #
       # rubocop:enable Style/NumericPredicate
+      #
+
+      def hann_window(frame_size)
+        idx = Numo::DFloat.new(frame_size).seq
+        0.5 * (1 - Numo::NMath.cos(2 * Math::PI * idx / (frame_size - 1)))
+      end
+
+      def stft(samples, frame_size: 2048, hop_length: 512)
+        samples, ranges = frame_ranges(samples, frame_size:, hop_length:)
+        window = hann_window(frame_size)
+        n_channels = samples.shape[0]
+        n_frames = ranges.size
+        n_freqs = (frame_size / 2) + 1
+
+        stft_matrix = Numo::DComplex.zeros(n_channels, n_freqs, n_frames)
+
+        ranges.each_with_index do |range, frame_idx|
+          n_channels.times do |ch|
+            stft_matrix[ch, true, frame_idx] = Numo::Pocketfft.fft samples[ch, range] * window
+          end
+        end
+
+        stft_matrix
+      end
     end
   end
 end

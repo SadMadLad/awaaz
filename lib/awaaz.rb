@@ -15,6 +15,7 @@ end
 
 require "ffi"
 require "numo/narray"
+require "numo/pocketfft"
 
 require_relative "awaaz/errors"
 require_relative "awaaz/extensions/extensions"

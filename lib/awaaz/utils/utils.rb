@@ -13,7 +13,7 @@
 # @example Accessing a utility class
 #   Awaaz::Utils::Soundread.new("file.wav").read
 #
-require_relative "numo_arrays"
+require_relative "features"
 require_relative "resample"
 require_relative "sound_config"
 require_relative "soundread"
