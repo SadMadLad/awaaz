@@ -11,5 +11,9 @@ Style/StringLiteralsInInterpolation:
 Metrics/MethodLength:
   Max: 20
 
+Style/NumericPredicate:
+  Enabled: false
 
+Metrics/ModuleLength:
+  Enabled: false # Temporary
 

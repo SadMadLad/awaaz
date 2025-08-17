@@ -3,7 +3,16 @@
 module Awaaz
   # Utilities for Awaaz
   module Utils
-    class << self
+    # Audio feature extraction utilities.
+    #
+    # This module implements common feature extraction
+    # algorithms used in speech and music analysis,
+    # such as RMS energy, zero-crossing rate, STFT,
+    # and spectral centroids. Most methods operate
+    # on multi-channel signals represented as
+    # `Numo::NArray` with shape `[channels, samples]`.
+    #
+    module Features
       ##
       # Calculates the total number of frames for a given signal length, frame size, and hop length.
       #
@@ -139,7 +148,6 @@ module Awaaz
       #   zcr_values = zcr(samples, frame_size: 2048, hop_length: 512)
       #   puts zcr_values.shape  # => [2, n_frames]
       #
-      # rubocop:disable Style/NumericPredicate
       def zcr(samples, frame_size: 2048, hop_length: 512)
         framed_samples, frame_groups = frame_ranges(samples, frame_size:, hop_length:)
 
@@ -175,7 +183,6 @@ module Awaaz
 
         counts / frame_size.to_f
       end
-      # rubocop:enable Style/NumericPredicate
 
       # Calculates the overall zero-crossing rate (ZCR) of an entire audio signal.
       #
@@ -189,14 +196,10 @@ module Awaaz
       #   overall_zcr = zcr_overall(samples)
       #   puts overall_zcr.shape  # => [2]
       #
-      # rubocop:disable Style/NumericPredicate
       #
       def zcr_overall(samples)
         ((samples[true, 0...-1] * samples[true, 1..-1]) < 0).count_true(axis: 1) / samples.shape[1].to_f
       end
-      #
-      # rubocop:enable Style/NumericPredicate
-      #
 
       # Generates a Hann window of given frame size.
       #
@@ -208,6 +211,37 @@ module Awaaz
       def hann_window(frame_size)
         idx = Numo::DFloat.new(frame_size).seq
         0.5 * (1 - Numo::NMath.cos(2 * Math::PI * idx / (frame_size - 1)))
+      end
+
+      # Prepares audio samples and parameters for FFT-based feature extraction.
+      #
+      # @param samples [Numo::NArray]
+      #   Multichannel audio samples as a 2D array
+      #   (shape: [channels, samples]).
+      # @param frame_size [Integer]
+      #   Number of samples per frame (FFT window length).
+      # @param hop_length [Integer]
+      #   Number of samples to shift between consecutive frames.
+      #
+      # @return [Array]
+      #   A tuple containing:
+      #   - samples [Numo::NArray] : Windowed audio samples aligned to frames
+      #   - ranges [Array<Range>] : Frame index ranges for iteration
+      #   - window [Numo::DFloat] : Hann window for FFT
+      #   - channels_count [Integer] : Number of audio channels
+      #   - freqs_size [Integer] : Number of FFT frequency bins per frame
+      #
+      # @example
+      #   samples, ranges, window, channels_count, freqs_size =
+      #     prepare_for_fft(audio, frame_size: 2048, hop_length: 512)
+      #
+      def prepare_for_fft(samples, frame_size:, hop_length:)
+        samples, ranges = frame_ranges(samples, frame_size:, hop_length:)
+        window = hann_window(frame_size)
+        channels_count = samples.shape[0]
+        freqs_size = (frame_size / 2) + 1
+
+        [samples, ranges, window, channels_count, freqs_size]
       end
 
       # Computes the Short-Time Fourier Transform (STFT) of a multi-channel signal.
@@ -230,13 +264,8 @@ module Awaaz
       #   samples = Numo::DFloat[[0.0, 1.0, 0.0, -1.0, ...]] # shape: [1, num_samples]
       #   stft_matrix = stft(samples, frame_size: 1024, hop_length: 256)
       #
-      # rubocop:disable Metrics/AbcSize
       def stft(samples, frame_size: 2048, hop_length: 512)
-        samples, ranges = frame_ranges(samples, frame_size:, hop_length:)
-        window = hann_window(frame_size)
-        channels_count = samples.shape[0]
-        freqs_size = (frame_size / 2) + 1
-
+        samples, ranges, window, channels_count, freqs_size = prepare_for_fft(samples, frame_size:, hop_length:)
         stft_matrix = Numo::DComplex.zeros(channels_count, freqs_size, ranges.size)
 
         ranges.each_with_index do |range, frame_idx|
@@ -248,7 +277,103 @@ module Awaaz
 
         stft_matrix
       end
-      # rubocop:enable Metrics/AbcSize
+
+      ##
+      # Computes the FFT (Fast Fourier Transform) of each channel
+      # in a multi-channel signal using a Hann window.
+      #
+      # @param samples [Numo::NArray] A 2D array of shape [channels, samples]
+      #   containing the audio data.
+      #
+      # @return [Numo::DComplex] A 2D complex array of shape
+      #   `[channels, samples]` containing the FFT result for each channel.
+      #
+      def fft(samples)
+        window = hann_window(samples.shape[1])
+        channels_count = samples.shape[0]
+        fft_results = channels_count.times.map do |ch|
+          Numo::Pocketfft.fft(samples[ch, true] * window)
+        end
+        Numo::DComplex[*fft_results]
+      end
+
+      ##
+      # Computes the frequency bin centers for an FFT.
+      #
+      # @param frame_size [Integer] The size of the FFT frame (in samples).
+      # @param sample_rate [Integer] The sampling rate of the audio (Hz).
+      #
+      # @return [Numo::DFloat] 1D array of frequency values (Hz)
+      #   corresponding to FFT bins. Shape: `[frame_size/2 + 1]`.
+      #
+      def frequency_bins(frame_size, sample_rate)
+        Numo::DFloat.new((frame_size / 2) + 1).seq * (sample_rate.to_f / frame_size)
+      end
+
+      ##
+      # Computes the magnitude spectrum of a single frame using an FFT.
+      #
+      # @param frame [Numo::NArray] 1D array of audio samples for a single frame.
+      #
+      # @return [Numo::DFloat] 1D array of magnitude values for each FFT bin.
+      #
+      def frame_magnitude(frame)
+        Numo::Pocketfft.rfft(frame).abs
+      end
+
+      ##
+      # Computes the spectral centroid of a single frame.
+      #
+      # The spectral centroid is the "center of mass" of the spectrum
+      # and is often associated with the perceived brightness of a sound.
+      #
+      # @param freqs [Numo::DFloat] 1D array of frequency bin centers.
+      # @param magnitude [Numo::DFloat] 1D array of magnitude values
+      #   corresponding to each frequency bin.
+      #
+      # @return [Float] The spectral centroid in Hz for the given frame.
+      #
+      def compute_centroid(freqs, magnitude)
+        mag_sum = magnitude.sum
+        return 0 if mag_sum.zero?
+
+        (freqs * magnitude).sum / mag_sum
+      end
+
+      ##
+      # Computes the spectral centroid trajectory of an audio signal.
+      #
+      # This method frames the signal, applies a Hann window,
+      # computes the FFT magnitudes, and calculates the centroid
+      # for each frame. The result is a time series of centroids.
+      #
+      # @param samples [Numo::NArray] A 2D array of shape [channels, samples].
+      # @param frame_size [Integer] Size of each analysis frame (default: 2048).
+      # @param hop_length [Integer] Step size between frames in samples (default: 512).
+      # @param sample_rate [Integer] Sampling rate of the audio in Hz (default: 22050).
+      #
+      # @return [Numo::DFloat] 2D array of spectral centroids with shape
+      #   `[channels, n_frames]`.
+      #
+      # @example
+      #   centroids = spectral_centroids(samples, frame_size: 1024, hop_length: 256, sample_rate: 44100)
+      #   puts centroids.shape # => [channels, n_frames]
+      #
+      def spectral_centroids(samples, frame_size: 2048, hop_length: 512, sample_rate: 22_050)
+        samples, ranges, window, channels_count = prepare_for_fft(samples, frame_size:, hop_length:)
+        freqs = frequency_bins(frame_size, sample_rate)
+        centroid_matrix = Numo::DFloat.zeros(channels_count, ranges.size)
+
+        ranges.each_with_index do |range, frame_idx|
+          channels_count.times do |ch|
+            frame = samples[ch, range] * window
+            magnitude = frame_magnitude(frame)
+            centroid_matrix[ch, frame_idx] = compute_centroid(freqs, magnitude)
+          end
+        end
+
+        centroid_matrix
+      end
     end
   end
 end
