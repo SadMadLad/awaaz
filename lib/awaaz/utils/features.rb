@@ -374,6 +374,38 @@ module Awaaz
 
         centroid_matrix
       end
+
+      # Convert frame indices to time in seconds.
+      #
+      # This method maps analysis frame indices (or total frame count) into
+      # corresponding time positions in seconds, similar to `librosa.frames_to_time`.
+      #
+      # @param frames [Integer, Numo::NArray] Either a single frame index,
+      #   or a Numo array of shape (n_channels, n_frames) from which the total
+      #   number of frames is inferred.
+      # @param hop_length [Integer] Number of audio samples between adjacent frames.
+      #   Defaults to 512.
+      # @param sample_rate [Integer] Sampling rate of the audio signal in Hz.
+      #   Defaults to 22,050 Hz.
+      #
+      # @return [Numo::DFloat] A 1-D Numo array of times (in seconds) corresponding
+      #   to each frame index. If `frames` is an Integer, the return value spans
+      #   from frame 0 up to `frames - 1`. If `frames` is a Numo array, the return
+      #   value spans the number of frames inferred from `frames.shape[1]`.
+      #
+      # @example Using total frame count
+      #   frames_to_time(100, hop_length: 512, sample_rate: 22050)
+      #   # => Numo::DFloat[0.0, 0.0232, ..., 2.3121]
+      #
+      # @example Using a spectrogram matrix
+      #   samples = Numo::DFloat.new(2, 500) # 2 channels, 500 frames
+      #   frames_to_time(samples, hop_length: 512, sample_rate: 22050)
+      #   # => Numo::DFloat[0.0, 0.0232, ..., 11.61]
+      #
+      def frames_to_time(frames, hop_length: 512, sample_rate: 22_050)
+        frames_size = frames.shape[1] unless frames.is_a?(Integer)
+        Numo::DFloat[0...frames_size] * hop_length / sample_rate.to_f
+      end
     end
   end
 end
