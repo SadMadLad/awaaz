@@ -32,16 +32,18 @@ module Awaaz
         # @example Resample 44.1kHz mono audio to 48kHz
         #   samples = Numo::SFloat.new(44100).rand
         #   new_samples = Awaaz::Utils::Resample.read_and_resample(samples, 44100, 48000)
-        def read_and_resample(input_samples, input_rate, output_rate, sampling_option: :linear)
-          validate_inputs(input_samples, input_rate, output_rate)
+        def read_and_resample(input_samples, input_rate, output_rate, channels, sampling_option: :sinc_fastest)
+          return input_samples if input_rate == output_rate
+
+          validate_inputs(input_samples)
 
           ratio = calculate_ratio(input_rate, output_rate)
-          input_ptr, output_ptr, input_frames, output_frames = prepare_memory(input_samples, ratio)
+          input_ptr, output_ptr, input_frames, output_frames = prepare_memory(input_samples, ratio, channels)
 
           data = build_src_data(input_ptr, output_ptr, input_frames, output_frames, ratio)
-          perform_resampling(data, sampling_option)
+          perform_resampling(data, sampling_option, channels)
 
-          convert_to_numo(output_ptr, data[:output_frames_gen])
+          convert_to_numo(output_ptr, data[:output_frames_gen] * channels)
         end
 
         private
@@ -54,10 +56,10 @@ module Awaaz
         # @param output_rate [Integer]
         #
         # @raise [ArgumentError] If samples are not a Numo::SFloat array.
-        def validate_inputs(samples, input_rate, output_rate)
-          return if input_rate != output_rate && samples.is_a?(Numo::NArray)
+        def validate_inputs(samples)
+          return if samples.is_a?(Numo::NArray)
 
-          raise ArgumentError, "Input must be a Numo::SFloat array" unless samples.is_a?(Numo::NArray)
+          raise ArgumentError, "Input must be a Numo::SFloat array"
         end
 
         ##
@@ -82,14 +84,14 @@ module Awaaz
         # @param ratio [Float] The resampling ratio.
         #
         # @return [Array<FFI::MemoryPointer, FFI::MemoryPointer, Integer, Integer>]
-        def prepare_memory(input_samples, ratio)
-          input_frames = input_samples.size
+        def prepare_memory(input_samples, ratio, channels)
+          input_frames = input_samples.size / channels
           output_frames = (input_frames * ratio).to_i
 
-          input_ptr = FFI::MemoryPointer.new(:float, input_frames)
+          input_ptr = FFI::MemoryPointer.new(:float, input_samples.size)
           input_ptr.write_bytes(input_samples.to_string)
 
-          output_ptr = FFI::MemoryPointer.new(:float, output_frames)
+          output_ptr = FFI::MemoryPointer.new(:float, output_frames * channels)
 
           [input_ptr, output_ptr, input_frames, output_frames]
         end
@@ -122,8 +124,9 @@ module Awaaz
         # @param sampling_option [Symbol, Integer]
         #
         # @raise [Awaaz::ResampleError] If resampling fails.
-        def perform_resampling(data, sampling_option)
-          err = Extensions::Samplerate.src_simple(data, Extensions::Samplerate.resample_option(sampling_option), 1)
+        def perform_resampling(data, sampling_option, channels)
+          err = Extensions::Samplerate.src_simple(data, Extensions::Samplerate.resample_option(sampling_option),
+                                                  channels)
           raise Awaaz::ResampleError, "Resampling failed: #{Extensions::Samplerate.src_strerror(err)}" if err != 0
         end
 

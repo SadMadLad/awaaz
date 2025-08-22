@@ -53,6 +53,15 @@ module Awaaz
       end
 
       ##
+      # Resampling option
+      #
+      # @return [Symbol] default :linear
+      #
+      def resampling_option
+        from_options(:resampling_option) || :linear
+      end
+
+      ##
       # Convenience method to check if audio is mono.
       #
       # @return [Boolean]

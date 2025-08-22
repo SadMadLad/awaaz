@@ -3,169 +3,142 @@
 module Awaaz
   module Utils
     ##
-    # A utility class for reading and optionally resampling audio files.
+    # A helper that mimics librosa.load using libsndfile via FFI.
     #
-    # This class supports reading `.wav` files using {Extensions::Soundfile}
-    # and can automatically resample them using {Utils::Resample}.
+    # - Always returns Float32 samples normalized in [-1.0, 1.0]
+    # - Preserves channel structure (returns shape `[channels, frames]`)
+    # - Returns `[data, channels, sr]` where:
+    #   * `data` = Numo::SFloat array (2D, shape: channels x frames)
+    #   * `channels` = Integer number of channels
+    #   * `sr` = sample rate (Integer)
     #
-    # @example Read and resample a WAV file
-    #   reader = Awaaz::Utils::Soundread.new("audio.wav", resample_options: { output_rate: 44100 })
-    #   samples, channels, rate = reader.read
-    #
-    # @note Currently, only `.wav` files are supported.
+    # @example
+    #   reader = Awaaz::Utils::Soundread.new("audio.wav")
+    #   data, channels, sr = reader.read
     #
     class Soundread
       ##
-      # Supported audio file extensions.
-      #
-      # @return [Array<String>] List of supported file extensions.
-      #
-      SUPPORTED_EXTENSIONS = %w[.wav].freeze
-
-      ##
-      # Creates a new Soundread instance.
+      # Initializes a Soundread instance.
       #
       # @param filename [String] Path to the audio file to read.
-      # @param resample_options [Hash] Options for resampling the audio.
-      #   - `:output_rate` [Integer] Output sample rate (default: `22050`)
-      #   - `:sampling_option` [Symbol] Resampling algorithm (default: `:sinc_fastest`)
+      # @param resampling_options [Hash] Optional resampling configuration.
       #
-      def initialize(filename, resample_options: default_resample_options)
+      def initialize(filename, **resampling_options)
         @filename = filename
-        @resample_options = resample_options || {}
+        @resampling_options = resampling_options
       end
 
       ##
-      # Reads the audio file, returning its samples and metadata.
+      # Reads the audio file, returning samples, number of channels, and sample rate.
       #
       # @return [Array<(Numo::SFloat, Integer, Integer)>]
-      #   A tuple containing:
-      #   - samples [Numo::SFloat] — Audio samples as a Numo array.
-      #   - channels [Integer] — Number of channels in the audio.
-      #   - output_rate [Integer] — Sample rate of the returned audio.
+      #   - data [Numo::SFloat] Audio samples, shape = `[channels, frames]`
+      #   - channels [Integer] Number of channels
+      #   - sr [Integer] Sample rate
       #
-      # @raise [ArgumentError] If the file extension is unsupported.
-      # @raise [Awaaz::AudioreadError] If the file cannot be opened.
+      # @raise [ArgumentError] If the file cannot be opened.
       #
       def read
-        validate_support
-        soundfile, sample_rate, frames, channels = open_file
-        samples = parse_soundfile(soundfile, frames, channels)
-        close_soundfile(soundfile)
+        info, sndfile = open_file
+        frames, channels, sr = extract_info(info)
 
-        resample(samples, sample_rate, channels)
+        buffer, read_frames = read_buffer(sndfile, frames, channels)
+        close_file(sndfile)
+
+        data = process_data(buffer, read_frames, channels)
+        [resample(data, sr, channels), channels, sr]
       end
 
       private
 
-      ##
-      # Default resampling options.
-      #
-      # @return [Hash] Default options with `:output_rate => 22050`.
-      #
-      def default_resample_options
-        { output_rate: 22_050 }
+      def resample(samples, sample_rate, channels)
+        validate_resampling_options
+
+        output_rate, sampling_option = @resampling_options.values_at(:output_rate, :sampling_rate)
+        sampling_option ||= :linear
+
+        return samples if output_rate == sample_rate || @resampling_options.empty?
+
+        Utils::Resample.read_and_resample(samples, sample_rate, output_rate, channels, sampling_option:)
+      end
+
+      def validate_resampling_options
+        valid_options = %i[output_rate sampling_option]
+
+        @resampling_options.transform_keys!(&:to_sym)
+        @resampling_options.each_key do |key|
+          next if valid_options.include?(key)
+
+          raise ArgumentError, "Invalid option: #{key}. Available options: #{valid_options.join}"
+        end
       end
 
       ##
-      # Ensures the file format is supported.
+      # Opens the file and retrieves SF_INFO metadata.
       #
-      # @raise [ArgumentError] If the file extension is not in {SUPPORTED_EXTENSIONS}.
+      # @return [Array<(Awaaz::Extensions::Soundfile::SF_INFO, FFI::Pointer)>]
       #
-      def validate_support
-        return if supported?
-
-        raise ArgumentError, "File extension not supported. Supported files: #{SUPPORTED_EXTENSIONS.join(",")}"
-      end
-
-      ##
-      # Checks if the file extension is supported.
-      #
-      # @return [Boolean] `true` if supported, `false` otherwise.
-      #
-      def supported?
-        SUPPORTED_EXTENSIONS.include?(File.extname(@filename))
-      end
-
-      ##
-      # Opens the audio file for reading.
-      #
-      # @return [Array<(FFI::Pointer, Integer, Integer, Integer)>]
-      #   A tuple containing:
-      #   - soundfile [FFI::Pointer] — Pointer to the opened sound file.
-      #   - sample_rate [Integer] — Sample rate of the audio file.
-      #   - frames [Integer] — Number of frames in the file.
-      #   - channels [Integer] — Number of channels in the file.
-      #
-      # @raise [Awaaz::AudioreadError] If the file cannot be opened.
+      # @raise [ArgumentError] If the file cannot be opened.
       #
       def open_file
-        info = Extensions::Soundfile::SF_INFO.new
-        sndfile = Extensions::Soundfile.sf_open(@filename, Extensions::Soundfile::SFM_READ, info.to_ptr)
+        info = Awaaz::Extensions::Soundfile::SF_INFO.new
+        sndfile = Awaaz::Extensions::Soundfile.sf_open(
+          @filename,
+          Awaaz::Extensions::Soundfile::SFM_READ,
+          info
+        )
 
-        raise Awaaz::AudioreadError, "Could not read the audio file" if sndfile.null?
+        raise ArgumentError, "Could not open file: #{@filename}" if sndfile.null?
 
-        sample_rate = info[:samplerate]
-        frames = info[:frames]
-        channels = info[:channels]
-        [sndfile, sample_rate, frames, channels]
+        [info, sndfile]
       end
 
       ##
-      # Reads the raw samples from the file and converts them into a Numo array.
+      # Extracts frames, channels, and sample rate from SF_INFO.
       #
-      # @param soundfile [FFI::Pointer] Open sound file pointer.
-      # @param frames [Integer] Number of frames to read.
-      # @param channels [Integer] Number of channels in the file.
-      # @return [Numo::SFloat] The audio samples.
+      # @param info [Awaaz::Extensions::Soundfile::SF_INFO]
+      # @return [Array<(Integer, Integer, Integer)>] frames, channels, sr
       #
-      def parse_soundfile(soundfile, frames, channels)
-        buffer = FFI::MemoryPointer.new(:float, frames * channels)
-        read_frames = Extensions::Soundfile.sf_readf_float(soundfile, buffer, frames)
+      def extract_info(info)
+        [info[:frames], info[:channels], info[:samplerate]]
+      end
 
-        Numo::SFloat.from_string(
-          buffer.read_string(read_frames * channels * FFI.type_size(:float))
-        )
+      ##
+      # Reads raw audio frames into a memory buffer.
+      #
+      # @param sndfile [FFI::Pointer] Opened sound file.
+      # @param frames [Integer] Number of frames to read.
+      # @param channels [Integer] Number of channels.
+      #
+      # @return [Array<(FFI::MemoryPointer, Integer)>] buffer and number of read frames
+      #
+      def read_buffer(sndfile, frames, channels)
+        buffer = FFI::MemoryPointer.new(:float, frames * channels)
+        read_frames = Awaaz::Extensions::Soundfile.sf_readf_float(sndfile, buffer, frames)
+        [buffer, read_frames]
       end
 
       ##
       # Closes the open sound file.
       #
-      # @param soundfile [FFI::Pointer] Open sound file pointer.
+      # @param sndfile [FFI::Pointer]
       # @return [void]
       #
-      def close_soundfile(soundfile)
-        Extensions::Soundfile.sf_close(soundfile)
+      def close_file(sndfile)
+        Awaaz::Extensions::Soundfile.sf_close(sndfile)
       end
 
       ##
-      # Resamples the audio if necessary.
+      # Converts the buffer into a Numo::SFloat array and reshapes to `[channels, frames]`.
       #
-      # @param samples [Numo::SFloat] The input samples.
-      # @param sample_rate [Integer] Original sample rate.
+      # @param buffer [FFI::MemoryPointer]
+      # @param read_frames [Integer] Number of frames read.
       # @param channels [Integer] Number of channels.
-      # @return [Array<(Numo::SFloat, Integer, Integer)>]
+      # @return [Numo::SFloat] Audio data of shape `[channels, frames]`.
       #
-      # @raise [ArgumentError] If an invalid resample option key is passed.
-      #
-      def resample(samples, sample_rate, channels)
-        valid_options = %i[output_rate sampling_option]
-
-        @resample_options.transform_keys!(&:to_sym)
-        @resample_options.each_key do |key|
-          next if valid_options.include?(key)
-
-          raise ArgumentError, "Invalid option: #{key}. Available options: #{valid_options.join}"
-        end
-
-        output_rate, sampling_option = @resample_options.values_at(:output_rate, :sampling_rate)
-        sampling_option ||= :linear
-
-        [
-          Utils::Resample.read_and_resample(samples, sample_rate, output_rate, sampling_option:),
-          channels,
-          output_rate
-        ]
+      def process_data(buffer, read_frames, channels)
+        data = Numo::SFloat[*buffer.read_array_of_float(read_frames * channels)]
+        data.reshape(read_frames, channels).transpose
       end
     end
   end

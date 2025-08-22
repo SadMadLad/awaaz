@@ -72,7 +72,7 @@ module Awaaz
       #   - number of channels
       #   - sample rate
       def soundread
-        Utils::Soundread.new(@filename).read
+        Utils::Soundread.new(@filename, output_rate: sample_rate, sampling_option: resampling_option).read
       end
 
       # Processes the decoded audio samples by reshaping and optionally converting to mono.
@@ -107,7 +107,7 @@ module Awaaz
       # Delegates option accessors to the {Utils::SoundConfig} instance.
       %i[
         sample_rate num_channels decoder_option mono mono?
-        stereo? amplification_factor soundread?
+        stereo? amplification_factor soundread? resampling_option
       ].each do |option_key|
         define_method(option_key) { @options.public_send(option_key) }
       end
