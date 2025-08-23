@@ -10,9 +10,8 @@
 # @see Awaaz::Decoders
 # @see Awaaz::Utils
 # @see Awaaz::Config
-module Awaaz
-end
-
+# @see Awaaz::Features
+# @see Awaaz::Properties
 require "ffi"
 require "numo/narray"
 require "numo/pocketfft"
@@ -24,4 +23,10 @@ require_relative "awaaz/version"
 
 require_relative "awaaz/config"
 require_relative "awaaz/decoders/decoders"
+require_relative "awaaz/features"
 require_relative "awaaz/properties"
+
+module Awaaz
+  extend Features
+  extend Properties
+end

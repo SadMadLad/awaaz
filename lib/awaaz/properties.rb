@@ -2,7 +2,8 @@
 
 # Awaaz gem
 module Awaaz
-  class << self
+  # Properties of audio
+  module Properties
     # Calculates the duration (in seconds) of an audio signal given the number of samples and the sample rate.
     #
     # @param samples [Numo::NArray, Array, Object]

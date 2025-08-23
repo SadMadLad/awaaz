@@ -13,7 +13,6 @@
 # @example Accessing a utility class
 #   Awaaz::Utils::Soundread.new("file.wav").read
 #
-require_relative "features"
 require_relative "resample"
 require_relative "sound_config"
 require_relative "soundread"
@@ -29,6 +28,4 @@ module Awaaz
   # consumers of the gem, but may be useful for advanced integrations.
   module Utils
   end
-
-  extend Utils::Features
 end
