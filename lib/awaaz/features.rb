@@ -484,5 +484,48 @@ module Awaaz
       frames_size = frames.shape[1] unless frames.is_a?(Integer)
       Numo::DFloat[0...frames_size] * hop_length / sample_rate.to_f
     end
+
+    ##
+    # Computes the spectral flatness of an audio signal.
+    #
+    # Spectral flatness measures how noise-like a signal is, as opposed to being tone-like.
+    # A value closer to 1.0 indicates the spectrum is flat (similar to white noise),
+    # while values closer to 0.0 indicate a peaky spectrum (like a sine wave or harmonic-rich signal).
+    #
+    # @param samples [Numo::NArray]
+    #   The input audio samples (1D array).
+    #
+    # @param frame_size [Integer] (2048)
+    #   The size of each FFT window (frame). Larger sizes give better frequency
+    #   resolution but worse time resolution.
+    #
+    # @param hop_length [Integer] (512)
+    #   The number of samples to shift between consecutive FFT frames. Smaller values
+    #   provide more overlap and smoother results.
+    #
+    # @param amin [Float] (1e-10)
+    #   A small constant added for numerical stability, preventing log(0) or division by zero.
+    #
+    # @param power [Integer] (2)
+    #   The power to which the magnitude spectrum is raised. Typically 2 to work with
+    #   power spectrograms.
+    #
+    # @return [Numo::DFloat]
+    #   A 1D Numo::DFloat array containing the spectral flatness values for each frame.
+    #
+    # @example Compute spectral flatness for an audio clip
+    #   samples = Awaaz::Utils::Soundread.new("audio.wav").read
+    #   flatness = spectral_flatness(samples, frame_size: 1024, hop_length: 256)
+    #   puts flatness.shape
+    #
+    def spectral_flatness(samples, frame_size: 2048, hop_length: 512, amin: 1e-10, power: 2)
+      stft_matrix = stft(samples, frame_size: frame_size, hop_length: hop_length).abs
+      stft_matrix = Numo::DFloat.maximum(amin, stft_matrix**power)
+
+      gms = Numo::DFloat::Math.exp Numo::DFloat::Math.log(stft_matrix).mean(axis: -2)
+      ams = stft_matrix.mean(axis: -2)
+
+      gms / ams
+    end
   end
 end
