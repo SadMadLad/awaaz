@@ -46,7 +46,7 @@ module Awaaz
       channels_count = array.shape.first
       padded_array = Numo::SFloat.new(channels_count, pad_count).fill(with)
 
-      array.concatenate(padded_array, axis:)
+      array.concatenate(padded_array, axis: axis)
     end
 
     ##
@@ -100,12 +100,13 @@ module Awaaz
     # @return [Numo::SFloat] A 2D array of RMS values with shape [channels, frames].
     #
     def rms(samples, frame_size: 2048, hop_length: 512)
-      samples, frame_groups = frame_ranges(samples, frame_size:, hop_length:)
+      samples, frame_groups = frame_ranges(samples, frame_size: frame_size, hop_length: hop_length)
 
       means = Numo::SFloat.zeros(samples.shape[0], frame_groups.length)
       frame_groups.each_with_index do |frame_range, idx|
         means[true, idx] = samples[true, frame_range].rms(axis: 1)
       end
+
       means
     end
 
@@ -139,7 +140,7 @@ module Awaaz
     #   puts zcr_values.shape  # => [2, n_frames]
     #
     def zcr(samples, frame_size: 2048, hop_length: 512)
-      framed_samples, frame_groups = frame_ranges(samples, frame_size:, hop_length:)
+      framed_samples, frame_groups = frame_ranges(samples, frame_size: frame_size, hop_length: hop_length)
 
       n_channels = framed_samples.shape[0]
       zcrs = Numo::SFloat.zeros(n_channels, frame_groups.length)
@@ -226,7 +227,7 @@ module Awaaz
     #     prepare_for_fft(audio, frame_size: 2048, hop_length: 512)
     #
     def prepare_for_fft(samples, frame_size:, hop_length:)
-      samples, ranges = frame_ranges(samples, frame_size:, hop_length:)
+      samples, ranges = frame_ranges(samples, frame_size: frame_size, hop_length: hop_length)
       window = hann_window(frame_size)
       channels_count = samples.shape[0]
       freqs_size = (frame_size / 2) + 1
@@ -255,7 +256,8 @@ module Awaaz
     #   stft_matrix = stft(samples, frame_size: 1024, hop_length: 256)
     #
     def stft(samples, frame_size: 2048, hop_length: 512)
-      samples, ranges, window, channels_count, freqs_size = prepare_for_fft(samples, frame_size:, hop_length:)
+      samples, ranges, window, channels_count, freqs_size = prepare_for_fft(samples, frame_size: frame_size,
+                                                                                     hop_length: hop_length)
       stft_matrix = Numo::DComplex.zeros(channels_count, freqs_size, ranges.size)
 
       ranges.each_with_index do |range, frame_idx|
@@ -350,7 +352,7 @@ module Awaaz
     #   puts centroids.shape # => [channels, n_frames]
     #
     def spectral_centroids(samples, frame_size: 2048, hop_length: 512, sample_rate: 22_050)
-      samples, ranges, window, channels_count = prepare_for_fft(samples, frame_size:, hop_length:)
+      samples, ranges, window, channels_count = prepare_for_fft(samples, frame_size: frame_size, hop_length: hop_length)
       freqs = frequency_bins(frame_size, sample_rate)
       centroid_matrix = Numo::DFloat.zeros(channels_count, ranges.size)
 
@@ -390,7 +392,7 @@ module Awaaz
     # @param power [Integer] Exponent for bandwidth calculation (default: 2)
     # @return [Numo::DFloat] Spectral bandwidth matrix (channels x frames)
     def spectral_bandwidth(samples, frame_size: 2048, hop_length: 512, sample_rate: 22_050, power: 2)
-      samples, ranges, window, channels_count = prepare_for_fft(samples, frame_size:, hop_length:)
+      samples, ranges, window, channels_count = prepare_for_fft(samples, frame_size: frame_size, hop_length: hop_length)
       freqs = frequency_bins(frame_size, sample_rate)
       bandwidth_matrix = Numo::DFloat.zeros(channels_count, ranges.size)
 
@@ -436,7 +438,7 @@ module Awaaz
     # @param threshold [Float] Proportion of spectral energy to retain (default: 0.85)
     # @return [Numo::DFloat] Spectral rolloff matrix (channels x frames)
     def spectral_rolloff(samples, frame_size: 2048, hop_length: 512, sample_rate: 22_050, threshold: 0.85)
-      stft_matrix = stft(samples, frame_size:, hop_length:).abs
+      stft_matrix = stft(samples, frame_size: frame_size, hop_length: hop_length).abs
       channels, _freqs_size, frames_size = stft_matrix.shape
       freqs = frequency_bins(frame_size, sample_rate)
 

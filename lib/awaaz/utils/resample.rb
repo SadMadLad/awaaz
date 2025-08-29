@@ -52,8 +52,6 @@ module Awaaz
         # Validates that the provided inputs are of the correct type and configuration.
         #
         # @param samples [Numo::NArray] The input samples.
-        # @param input_rate [Integer]
-        # @param output_rate [Integer]
         #
         # @raise [ArgumentError] If samples are not a Numo::SFloat array.
         def validate_inputs(samples)

@@ -59,7 +59,7 @@ module Awaaz
 
         return samples if output_rate == sample_rate || @resampling_options.empty?
 
-        Utils::Resample.read_and_resample(samples, sample_rate, output_rate, channels, sampling_option:)
+        Utils::Resample.read_and_resample(samples, sample_rate, output_rate, channels, sampling_option: sampling_option)
       end
 
       def validate_resampling_options
@@ -137,7 +137,7 @@ module Awaaz
       # @return [Numo::SFloat] Audio data of shape `[channels, frames]`.
       #
       def process_data(buffer, read_frames, channels)
-        data = Numo::SFloat[*buffer.read_array_of_float(read_frames * channels)]
+        data = Numo::SFloat.cast(buffer.read_array_of_float(read_frames * channels))
         data.reshape(read_frames, channels).transpose
       end
     end

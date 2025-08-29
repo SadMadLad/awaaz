@@ -49,7 +49,7 @@ module Awaaz
       # @return [Boolean] +true+ if mono, otherwise +false+.
       #
       def mono
-        from_options(:mono) || false
+        from_options(:mono) || true
       end
 
       ##

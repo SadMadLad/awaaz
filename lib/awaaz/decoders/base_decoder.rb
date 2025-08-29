@@ -41,9 +41,9 @@ module Awaaz
       set_available_options
 
       # @param filename [String] Path to the audio file to decode.
-      def initialize(filename, **)
+      def initialize(filename, **options)
         @filename = filename
-        @options = Utils::SoundConfig.new(available_options, **)
+        @options = Utils::SoundConfig.new(available_options, **options)
       end
 
       # Loads audio data.

@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = "A gem for loading, decoding, processing and analyse audio."
   spec.homepage = "https://github.com/SadMadLad/awaaz"
   spec.license = "MIT"
-  spec.required_ruby_version = ">= 3.4.2"
+  spec.required_ruby_version = ">= 3.0.0"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
 
