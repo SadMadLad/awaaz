@@ -56,7 +56,7 @@ samples, sample_rate = Awaaz.load("path/to/audio_file")
 
 ## Documentation
 
-[Documentation](https://www.rubydoc.info/github/SadMadLad/awaaz)
+[Link to Documentation](https://www.rubydoc.info/gems/awaaz)
 
 Checkout [this demo](https://github.com/SadMadLad/awaaz-demo) to get more idea of some use cases of the gem
 
