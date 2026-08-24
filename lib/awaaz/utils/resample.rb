@@ -31,7 +31,7 @@ module Awaaz
         #
         # @example Resample 44.1kHz mono audio to 48kHz
         #   samples = Numo::SFloat.new(44100).rand
-        #   new_samples = Awaaz::Utils::Resample.read_and_resample(samples, 44100, 48000)
+        #   new_samples = Awaaz::Utils::Resample.read_and_resample(samples, 44100, 48000, 1)
         def read_and_resample(input_samples, input_rate, output_rate, channels, sampling_option: :sinc_fastest)
           return input_samples if input_rate == output_rate
 
