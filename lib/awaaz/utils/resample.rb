@@ -27,7 +27,7 @@ module Awaaz
         # @return [Numo::SFloat] The resampled audio data.
         #
         # @raise [ArgumentError] If inputs are invalid or ratio is out of range.
-        # @raise [Awaaz::ResampleError] If `libsamplerate` returns an error.
+        # @raise [Awaaz::ResamplingError] If `libsamplerate` returns an error.
         #
         # @example Resample 44.1kHz mono audio to 48kHz
         #   samples = Numo::SFloat.new(44100).rand
@@ -121,11 +121,11 @@ module Awaaz
         # @param data [Extensions::Samplerate::SRC_DATA]
         # @param sampling_option [Symbol, Integer]
         #
-        # @raise [Awaaz::ResampleError] If resampling fails.
+        # @raise [Awaaz::ResamplingError] If resampling fails.
         def perform_resampling(data, sampling_option, channels)
           err = Extensions::Samplerate.src_simple(data, Extensions::Samplerate.resample_option(sampling_option),
                                                   channels)
-          raise Awaaz::ResampleError, "Resampling failed: #{Extensions::Samplerate.src_strerror(err)}" if err != 0
+          raise Awaaz::ResamplingError, "Resampling failed: #{Extensions::Samplerate.src_strerror(err)}" if err != 0
         end
 
         ##
