@@ -85,8 +85,7 @@ module Awaaz
         def prepare_memory(input_samples, ratio, channels)
           input_frames = input_samples.size / channels
           output_frames = (input_frames * ratio).to_i
-
-          input_ptr = FFI::MemoryPointer.new(:float, input_samples.size)
+          input_ptr = FFI::MemoryPointer.new(:float, input_samples.byte_size)
           input_ptr.write_bytes(input_samples.to_string)
 
           output_ptr = FFI::MemoryPointer.new(:float, output_frames * channels)
