@@ -44,6 +44,7 @@ module Awaaz
           perform_resampling(data, sampling_option, channels)
 
           convert_to_numo(output_ptr, data[:output_frames_gen] * channels)
+            .reshape!(channels, data[:output_frames_gen] / channels)
         end
 
         private
